@@ -86,6 +86,7 @@ Reusable project logic lives in `src/prem_valuation/`:
 | Random Forest | Retained | Beat Ridge on every walk-forward fold and improved final test MAE to €9.46m. |
 | History Random Forest | Retained | Previous-season PL stats and previous market value reduced final test MAE to €5.80m and lifted R² to 0.824. |
 | Weighted history Random Forest | Selected | Adds previous all-competition production with league/competition weights and latest preseason market value; improves walk-forward MAE and reduces the new-signing blind spot. |
+| Valuation update model | Experimental | Predicts percentage change from preseason value; helps some elite compression cases but has slightly worse validation MAE. Saved as comparison columns. |
 | 2025/26 scoring | First output | Generated candidate undervalued, overvalued, high-confidence, and recruitment-style bargain lists. |
 
 The selected model is now a weighted-history Random Forest. It averaged

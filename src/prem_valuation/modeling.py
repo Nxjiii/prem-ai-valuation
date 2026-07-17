@@ -96,6 +96,42 @@ def predict_non_negative(model: Pipeline, data: pd.DataFrame) -> np.ndarray:
     return np.clip(model.predict(data), 0, None)
 
 
+def add_log_value_change_target(
+    data: pd.DataFrame,
+    *,
+    target: str,
+    previous_value_column: str = "previous_known_market_value_in_eur",
+    output_column: str = "log_value_change",
+) -> pd.DataFrame:
+    """Add log post-season value change relative to latest known prior value."""
+    result = data.copy()
+    valid_previous_value = result[previous_value_column].gt(0)
+    result[output_column] = np.nan
+    result.loc[valid_previous_value, output_column] = np.log(
+        result.loc[valid_previous_value, target]
+        / result.loc[valid_previous_value, previous_value_column]
+    )
+    return result
+
+
+def predict_value_from_log_change(
+    model: Pipeline,
+    data: pd.DataFrame,
+    *,
+    previous_value_column: str = "previous_known_market_value_in_eur",
+    min_multiplier: float = 0.2,
+    max_multiplier: float = 3.0,
+) -> np.ndarray:
+    """Predict market value by applying a predicted log-change multiplier."""
+    log_change_predictions = model.predict(data)
+    multipliers = np.clip(
+        np.exp(log_change_predictions),
+        min_multiplier,
+        max_multiplier,
+    )
+    return data[previous_value_column].to_numpy() * multipliers
+
+
 def walk_forward_evaluate(
     data: pd.DataFrame,
     feature_columns: list[str],
@@ -125,6 +161,53 @@ def walk_forward_evaluate(
         rows.append({
             "validation_season": validation_season,
             **evaluate_predictions(fold_validation[target], predictions),
+        })
+
+    return pd.DataFrame(rows)
+
+
+def walk_forward_evaluate_log_change(
+    data: pd.DataFrame,
+    feature_columns: list[str],
+    target: str,
+    change_target: str,
+    model_builder: Callable[[], Pipeline],
+    *,
+    previous_value_column: str = "previous_known_market_value_in_eur",
+    first_train_season: int = 2016,
+    validation_seasons: Iterable[int] = range(2019, 2024),
+) -> pd.DataFrame:
+    """Evaluate a value-update model with expanding-window season folds."""
+    rows = []
+    modelling_data = data.loc[
+        data[previous_value_column].gt(0)
+        & data[change_target].notna()
+    ].copy()
+
+    for validation_season in validation_seasons:
+        fold_train = modelling_data.loc[
+            modelling_data["season"].between(
+                first_train_season,
+                validation_season - 1,
+            )
+        ]
+        fold_validation = modelling_data.loc[
+            modelling_data["season"].eq(validation_season)
+        ]
+
+        model = model_builder()
+        model.fit(fold_train[feature_columns], fold_train[change_target])
+
+        predictions = predict_value_from_log_change(
+            model,
+            fold_validation[feature_columns],
+            previous_value_column=previous_value_column,
+        )
+
+        rows.append({
+            "validation_season": validation_season,
+            **evaluate_predictions(fold_validation[target], predictions),
+            "rows": len(fold_validation),
         })
 
     return pd.DataFrame(rows)
