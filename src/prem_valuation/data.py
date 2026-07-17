@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
 REFERENCE_DIR = PROJECT_ROOT / "data" / "reference"
 INTERIM_DIR = PROJECT_ROOT / "data" / "interim"
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 
 def load_raw_tables() -> dict[str, pd.DataFrame]:
@@ -21,6 +22,24 @@ def load_raw_tables() -> dict[str, pd.DataFrame]:
         "appearances": pd.read_csv(RAW_DIR / "appearances.csv.gz"),
         "games": pd.read_csv(RAW_DIR / "games.csv.gz", parse_dates=["date"]),
     }
+
+
+def load_players() -> pd.DataFrame:
+    """Load the raw player profile table."""
+    return pd.read_csv(RAW_DIR / "players.csv.gz")
+
+
+def load_interim_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load the prepared modelling and scoring datasets."""
+    labelled = pd.read_csv(
+        INTERIM_DIR / "labelled_player_seasons.csv.gz",
+        parse_dates=["season_end_date", "valuation_date", "date_of_birth"],
+    )
+    scoring = pd.read_csv(
+        INTERIM_DIR / "scoring_2025_26.csv.gz",
+        parse_dates=["season_end_date", "date_of_birth"],
+    )
+    return labelled, scoring
 
 
 def build_player_season_stats(

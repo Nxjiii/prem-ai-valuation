@@ -33,6 +33,22 @@ python scripts/build_datasets.py
 This creates a labelled historical player-season dataset and an unlabelled
 2025/26 scoring dataset in `data/interim/`.
 
+The nonlinear modelling notebook can then save ranking outputs to
+`data/processed/`, including:
+
+- `scoring_results_2025_26.csv`
+- `undervalued_players_2025_26.csv`
+- `overvalued_players_2025_26.csv`
+- `high_confidence_undervalued_2025_26.csv`
+- `recruitment_bargains_2025_26.csv`
+
+Reusable project logic lives in `src/prem_valuation/`:
+
+- `data.py`: raw/interim data loading and dataset construction
+- `features.py`: feature lists, engineered features, and history features
+- `modeling.py`: model builders and temporal evaluation helpers
+- `rankings.py`: scoring, ranking, and CSV output helpers
+
 ## Workflow so far
 
 1. Validated players, appearances, games, and valuation schemas and join keys.
