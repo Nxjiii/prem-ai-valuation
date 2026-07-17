@@ -42,10 +42,14 @@ The nonlinear modelling notebook can then save ranking outputs to
 - `high_confidence_undervalued_2025_26.csv`
 - `recruitment_bargains_2025_26.csv`
 
+`notebooks/04_big_six_plots.ipynb` uses these outputs to generate Big Six
+Transfermarkt-vs-model valuation plots in `reports/figures/`.
+
 Reusable project logic lives in `src/prem_valuation/`:
 
 - `data.py`: raw/interim data loading and dataset construction
-- `features.py`: feature lists, engineered features, and history features
+- `features.py`: feature lists, engineered features, PL history features, and
+  weighted all-competition history features
 - `modeling.py`: model builders and temporal evaluation helpers
 - `rankings.py`: scoring, season-club metadata, ranking, and CSV output helpers
 
@@ -80,12 +84,16 @@ Reusable project logic lives in `src/prem_valuation/`:
 | Ridge alpha tuning | Retained | Alpha 100 produced the lowest mean walk-forward MAE, though the gain was marginal. |
 | Frozen Ridge test | Baseline complete | Achieved €10.39m MAE and 0.426 R² on the 2024/25 test season. |
 | Random Forest | Retained | Beat Ridge on every walk-forward fold and improved final test MAE to €9.46m. |
-| History Random Forest | Selected | Previous-season stats and previous market value reduced final test MAE to €5.80m and lifted R² to 0.824. |
+| History Random Forest | Retained | Previous-season PL stats and previous market value reduced final test MAE to €5.80m and lifted R² to 0.824. |
+| Weighted history Random Forest | Selected | Adds previous all-competition production with league/competition weights and latest preseason market value; improves walk-forward MAE and reduces the new-signing blind spot. |
 | 2025/26 scoring | First output | Generated candidate undervalued, overvalued, high-confidence, and recruitment-style bargain lists. |
 
-The selected model is now a history-aware Random Forest. It averaged
-approximately **€5.94m MAE** across five walk-forward validation seasons and
-achieved **€5.80m MAE** on the held-out 2024/25 test season.
+The selected model is now a weighted-history Random Forest. It averaged
+approximately **€5.61m MAE** across five walk-forward validation seasons. Its
+held-out 2024/25 test performance is close to the PL-history model, while its
+2025/26 scoring is better suited to players arriving from outside the Premier
+League because previous non-PL production and latest known preseason market
+value are no longer ignored.
 
 Current ranking outputs should be treated as candidate shortlists rather than
 final truths. The model is strongest for players with previous Premier League

@@ -157,22 +157,42 @@ def build_scoring_results(
     predictions: np.ndarray,
 ) -> pd.DataFrame:
     """Create the scored player table used for valuation-gap rankings."""
+    base_columns = [
+        "season",
+        "player_id",
+        "player_name",
+        "season_club_id",
+        "season_club_name",
+        "current_club_name",
+        "current_club_domestic_competition_id",
+        "position",
+        "sub_position",
+        "age_at_season_end",
+        "minutes_played",
+        "previous_minutes_played",
+        "current_market_value_in_eur",
+        "previous_market_value_in_eur",
+    ]
+    optional_columns = [
+        "previous_known_market_value_in_eur",
+        "previous_all_minutes",
+        "previous_all_goals",
+        "previous_all_assists",
+        "previous_weighted_minutes",
+        "previous_weighted_goals",
+        "previous_weighted_assists",
+        "previous_domestic_league_minutes",
+        "previous_domestic_league_goals",
+        "previous_domestic_league_assists",
+        "previous_europe_minutes",
+        "previous_europe_goals",
+        "previous_europe_assists",
+    ]
     scoring_results = scoring_data[
-        [
-            "season",
-            "player_id",
-            "player_name",
-            "season_club_id",
-            "season_club_name",
-            "current_club_name",
-            "current_club_domestic_competition_id",
-            "position",
-            "sub_position",
-            "age_at_season_end",
-            "minutes_played",
-            "previous_minutes_played",
-            "current_market_value_in_eur",
-            "previous_market_value_in_eur",
+        base_columns
+        + [
+            column for column in optional_columns
+            if column in scoring_data.columns
         ]
     ].copy()
 
@@ -182,8 +202,15 @@ def build_scoring_results(
         - scoring_results["current_market_value_in_eur"]
     )
     scoring_results["absolute_gap"] = scoring_results["valuation_gap"].abs()
+    has_previous_pl_value = scoring_results["previous_market_value_in_eur"].notna()
+    if "previous_known_market_value_in_eur" in scoring_results.columns:
+        has_previous_known_value = scoring_results[
+            "previous_known_market_value_in_eur"
+        ].notna()
+    else:
+        has_previous_known_value = False
     scoring_results["has_previous_market_value"] = (
-        scoring_results["previous_market_value_in_eur"].notna()
+        has_previous_pl_value | has_previous_known_value
     )
     scoring_results["minutes_band"] = pd.cut(
         scoring_results["minutes_played"],

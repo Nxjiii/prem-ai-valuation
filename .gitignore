@@ -9,7 +9,9 @@ __pycache__/
 data/raw/*
 data/interim/*
 data/processed/*
+reports/figures/*.png
 
 !data/raw/.gitkeep
 !data/interim/.gitkeep
 !data/processed/.gitkeep
+!reports/figures/.gitkeep
