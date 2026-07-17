@@ -8,6 +8,7 @@ import pandas as pd
 
 RANKING_COLUMNS = [
     "player_name",
+    "season_club_name",
     "current_club_name",
     "position",
     "sub_position",
@@ -21,6 +22,7 @@ RANKING_COLUMNS = [
 
 HIGH_CONFIDENCE_COLUMNS = [
     "player_name",
+    "season_club_name",
     "current_club_name",
     "position",
     "sub_position",
@@ -67,6 +69,89 @@ def attach_current_player_values(
     )
 
 
+def build_season_club_lookup(
+    appearances: pd.DataFrame,
+    games: pd.DataFrame,
+    players: pd.DataFrame,
+    *,
+    season: int,
+    competition_id: str = "GB1",
+) -> pd.DataFrame:
+    """Build one season-club row per player from actual league appearances."""
+    game_lookup = games[["game_id", "season", "competition_id"]]
+    appearances_with_games = appearances.merge(
+        game_lookup,
+        on="game_id",
+        how="left",
+        suffixes=("", "_game"),
+        validate="many_to_one",
+    )
+    season_appearances = appearances_with_games.loc[
+        appearances_with_games["season"].eq(season)
+        & appearances_with_games["competition_id"].eq(competition_id)
+    ].copy()
+
+    season_clubs = (
+        season_appearances.groupby(
+            ["player_id", "player_club_id"],
+            as_index=False,
+        )
+        .agg(
+            season_club_minutes=("minutes_played", "sum"),
+            season_club_appearances=("appearance_id", "count"),
+        )
+        .sort_values(
+            ["player_id", "season_club_minutes", "season_club_appearances"],
+            ascending=[True, False, False],
+        )
+        .drop_duplicates("player_id", keep="first")
+        .rename(columns={"player_club_id": "season_club_id"})
+    )
+
+    club_lookup = (
+        players[["current_club_id", "current_club_name"]]
+        .dropna()
+        .drop_duplicates("current_club_id")
+        .rename(columns={
+            "current_club_id": "season_club_id",
+            "current_club_name": "season_club_name",
+        })
+    )
+    season_clubs = season_clubs.merge(
+        club_lookup,
+        on="season_club_id",
+        how="left",
+    )
+    season_clubs["season_club_name"] = season_clubs[
+        "season_club_name"
+    ].fillna(season_clubs["season_club_id"].astype(str))
+    return season_clubs
+
+
+def attach_season_club_metadata(
+    scoring_data: pd.DataFrame,
+    season_club_lookup: pd.DataFrame,
+) -> pd.DataFrame:
+    """Attach actual season club metadata to scoring rows."""
+    columns_to_replace = [
+        "season_club_id",
+        "season_club_name",
+        "season_club_minutes",
+        "season_club_appearances",
+    ]
+
+    return scoring_data.drop(
+        columns=[
+            column for column in columns_to_replace
+            if column in scoring_data.columns
+        ]
+    ).merge(
+        season_club_lookup,
+        on="player_id",
+        how="left",
+    )
+
+
 def build_scoring_results(
     scoring_data: pd.DataFrame,
     predictions: np.ndarray,
@@ -77,6 +162,8 @@ def build_scoring_results(
             "season",
             "player_id",
             "player_name",
+            "season_club_id",
+            "season_club_name",
             "current_club_name",
             "current_club_domestic_competition_id",
             "position",
@@ -114,7 +201,7 @@ def make_ranking_tables(
     """Build the standard 2025/26 valuation ranking outputs."""
     ranking_pool = scoring_results.loc[
         scoring_results["current_market_value_in_eur"].notna()
-        & scoring_results["current_club_domestic_competition_id"].eq("GB1")
+        & scoring_results["season_club_name"].notna()
     ].copy()
     regular_minutes = ranking_pool["minutes_band"].eq("regular_minutes")
 

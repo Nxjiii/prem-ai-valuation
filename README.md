@@ -47,7 +47,7 @@ Reusable project logic lives in `src/prem_valuation/`:
 - `data.py`: raw/interim data loading and dataset construction
 - `features.py`: feature lists, engineered features, and history features
 - `modeling.py`: model builders and temporal evaluation helpers
-- `rankings.py`: scoring, ranking, and CSV output helpers
+- `rankings.py`: scoring, season-club metadata, ranking, and CSV output helpers
 
 ## Workflow so far
 

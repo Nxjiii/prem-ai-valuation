@@ -29,6 +29,16 @@ def load_players() -> pd.DataFrame:
     return pd.read_csv(RAW_DIR / "players.csv.gz")
 
 
+def load_appearances() -> pd.DataFrame:
+    """Load raw appearance rows."""
+    return pd.read_csv(RAW_DIR / "appearances.csv.gz")
+
+
+def load_games() -> pd.DataFrame:
+    """Load raw game rows."""
+    return pd.read_csv(RAW_DIR / "games.csv.gz", parse_dates=["date"])
+
+
 def load_interim_tables() -> tuple[pd.DataFrame, pd.DataFrame]:
     """Load the prepared modelling and scoring datasets."""
     labelled = pd.read_csv(
