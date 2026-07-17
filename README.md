@@ -43,6 +43,8 @@ This creates a labelled historical player-season dataset and an unlabelled
 6. Split chronologically: train through 2022/23, validate on 2023/24, reserve
    2024/25 for final testing, and retain 2025/26 for later scoring.
 7. Used five expanding-window validation folds for feature decisions.
+8. Evaluated the frozen Ridge baseline on 2024/25 and analysed errors by
+   position, value, minutes, and age.
 
 ## Experiments
 
@@ -55,7 +57,11 @@ This creates a labelled historical player-season dataset and an unlabelled
 | Nonlinear age curve | Retained | Values peak in the mid-20s rather than changing linearly. |
 | Sub-position | Retained | Granular roles improved temporal validation. |
 | Stabilised per-90 rates | Rejected | Gains were tiny and inconsistent across seasons. |
+| Ridge alpha tuning | Retained | Alpha 100 produced the lowest mean walk-forward MAE, though the gain was marginal. |
+| Frozen Ridge test | Baseline complete | Achieved €10.39m MAE and 0.426 R² on the 2024/25 test season. |
 
-The selected Ridge features currently average approximately **€9.31m MAE** and
-**0.502 R²** across five walk-forward validation seasons. Next: tune Ridge
-regularisation before evaluating once on the untouched 2024/25 test season.
+The selected Ridge model averaged approximately **€9.29m MAE** across five
+walk-forward validation seasons. Residual analysis found that it compresses
+valuations toward the middle: cheaper players are often overpredicted, while
+elite players are systematically underpredicted. This motivates one controlled
+comparison with a nonlinear model before producing player rankings.
