@@ -187,6 +187,16 @@ def build_scoring_results(
         "previous_europe_minutes",
         "previous_europe_goals",
         "previous_europe_assists",
+        "team_points",
+        "team_goal_difference",
+        "team_final_position",
+        "team_won_league",
+        "team_top_4",
+        "team_points_change",
+        "team_position_change",
+        "player_minutes_share",
+        "minutes_in_title_winning_team",
+        "minutes_in_top_4_team",
     ]
     scoring_results = scoring_data[
         base_columns

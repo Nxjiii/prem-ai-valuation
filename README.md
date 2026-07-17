@@ -48,8 +48,8 @@ Transfermarkt-vs-model valuation plots in `reports/figures/`.
 Reusable project logic lives in `src/prem_valuation/`:
 
 - `data.py`: raw/interim data loading and dataset construction
-- `features.py`: feature lists, engineered features, PL history features, and
-  weighted all-competition history features
+- `features.py`: feature lists, engineered features, history features, and
+  team-context features
 - `modeling.py`: model builders and temporal evaluation helpers
 - `rankings.py`: scoring, season-club metadata, ranking, and CSV output helpers
 
@@ -86,15 +86,16 @@ Reusable project logic lives in `src/prem_valuation/`:
 | Random Forest | Retained | Beat Ridge on every walk-forward fold and improved final test MAE to €9.46m. |
 | History Random Forest | Retained | Previous-season PL stats and previous market value reduced final test MAE to €5.80m and lifted R² to 0.824. |
 | Weighted history Random Forest | Selected | Adds previous all-competition production with league/competition weights and latest preseason market value; improves walk-forward MAE and reduces the new-signing blind spot. |
-| Valuation update model | Experimental | Predicts percentage change from preseason value; helps some elite compression cases but has slightly worse validation MAE. Saved as comparison columns. |
+| Team-context Random Forest | Retained | Adds team points, league position, title/top-four context, and player minutes share; improved walk-forward MAE to about €4.76m. |
+| Valuation update model | Selected for scoring | Predicts percentage change from preseason value using weighted history and team context, then converts the change back into euros for the final 2025/26 rankings. |
 | 2025/26 scoring | First output | Generated candidate undervalued, overvalued, high-confidence, and recruitment-style bargain lists. |
 
-The selected model is now a weighted-history Random Forest. It averaged
-approximately **€5.61m MAE** across five walk-forward validation seasons. Its
-held-out 2024/25 test performance is close to the PL-history model, while its
-2025/26 scoring is better suited to players arriving from outside the Premier
-League because previous non-PL production and latest known preseason market
-value are no longer ignored.
+The selected scoring model is now a valuation-update Random Forest using
+weighted all-competition history, latest known preseason market value, and team
+context. The team-context absolute-value model averaged approximately
+**€4.76m MAE** across five walk-forward validation seasons, while the selected
+valuation-update version reached approximately **€4.65m MAE** on the held-out
+2024/25 test season.
 
 Current ranking outputs should be treated as candidate shortlists rather than
 final truths. The model is strongest for players with previous Premier League

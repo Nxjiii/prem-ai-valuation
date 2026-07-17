@@ -70,6 +70,25 @@ WEIGHTED_HISTORY_FEATURES = [
     "previous_europe_assists",
 ]
 
+TEAM_CONTEXT_FEATURES = [
+    "team_points",
+    "team_goal_difference",
+    "team_goals_for",
+    "team_goals_against",
+    "team_win_rate",
+    "team_final_position",
+    "team_won_league",
+    "team_top_4",
+    "team_relegated",
+    "team_previous_points",
+    "team_previous_final_position",
+    "team_points_change",
+    "team_position_change",
+    "player_minutes_share",
+    "minutes_in_title_winning_team",
+    "minutes_in_top_4_team",
+]
+
 HISTORY_NUMERIC_FEATURES = (
     SELECTED_NUMERIC_FEATURES
     + PREVIOUS_FEATURES
@@ -81,6 +100,12 @@ WEIGHTED_HISTORY_NUMERIC_FEATURES = (
 )
 WEIGHTED_HISTORY_FEATURES_ALL = (
     WEIGHTED_HISTORY_NUMERIC_FEATURES + SELECTED_CATEGORICAL_FEATURES
+)
+TEAM_CONTEXT_NUMERIC_FEATURES = (
+    WEIGHTED_HISTORY_NUMERIC_FEATURES + TEAM_CONTEXT_FEATURES
+)
+TEAM_CONTEXT_FEATURES_ALL = (
+    TEAM_CONTEXT_NUMERIC_FEATURES + SELECTED_CATEGORICAL_FEATURES
 )
 
 
@@ -401,3 +426,214 @@ def add_latest_weighted_history_to_scoring(
         on="player_id",
         how="left",
     )
+
+
+def build_team_season_context(
+    games: pd.DataFrame,
+    *,
+    competition_id: str = "GB1",
+) -> pd.DataFrame:
+    """Build one Premier League club-season row with table/context features."""
+    league_games = games.loc[games["competition_id"].eq(competition_id)].copy()
+
+    home_rows = league_games[
+        [
+            "season",
+            "home_club_id",
+            "home_club_name",
+            "home_club_goals",
+            "away_club_goals",
+        ]
+    ].rename(columns={
+        "home_club_id": "season_club_id",
+        "home_club_name": "team_name",
+        "home_club_goals": "goals_for",
+        "away_club_goals": "goals_against",
+    })
+    away_rows = league_games[
+        [
+            "season",
+            "away_club_id",
+            "away_club_name",
+            "away_club_goals",
+            "home_club_goals",
+        ]
+    ].rename(columns={
+        "away_club_id": "season_club_id",
+        "away_club_name": "team_name",
+        "away_club_goals": "goals_for",
+        "home_club_goals": "goals_against",
+    })
+
+    team_games = pd.concat([home_rows, away_rows], ignore_index=True)
+    team_games["win"] = team_games["goals_for"].gt(
+        team_games["goals_against"]
+    ).astype(int)
+    team_games["draw"] = team_games["goals_for"].eq(
+        team_games["goals_against"]
+    ).astype(int)
+    team_games["loss"] = team_games["goals_for"].lt(
+        team_games["goals_against"]
+    ).astype(int)
+    team_games["points"] = team_games["win"] * 3 + team_games["draw"]
+
+    team_context = (
+        team_games.groupby(["season", "season_club_id"], as_index=False)
+        .agg(
+            team_name=("team_name", "last"),
+            team_matches=("points", "count"),
+            team_wins=("win", "sum"),
+            team_draws=("draw", "sum"),
+            team_losses=("loss", "sum"),
+            team_points=("points", "sum"),
+            team_goals_for=("goals_for", "sum"),
+            team_goals_against=("goals_against", "sum"),
+        )
+    )
+    team_context["team_goal_difference"] = (
+        team_context["team_goals_for"]
+        - team_context["team_goals_against"]
+    )
+    team_context["team_win_rate"] = (
+        team_context["team_wins"] / team_context["team_matches"]
+    )
+    team_context["team_final_position"] = (
+        team_context.sort_values(
+            [
+                "season",
+                "team_points",
+                "team_goal_difference",
+                "team_goals_for",
+            ],
+            ascending=[True, False, False, False],
+        )
+        .groupby("season")
+        .cumcount()
+        + 1
+    )
+    team_context["team_won_league"] = (
+        team_context["team_final_position"].eq(1).astype(int)
+    )
+    team_context["team_top_4"] = (
+        team_context["team_final_position"].le(4).astype(int)
+    )
+    teams_per_season = team_context.groupby("season")[
+        "season_club_id"
+    ].transform("count")
+    team_context["team_relegated"] = (
+        team_context["team_final_position"].gt(teams_per_season - 3).astype(int)
+    )
+
+    previous_team_context = team_context[
+        [
+            "season",
+            "season_club_id",
+            "team_points",
+            "team_final_position",
+        ]
+    ].copy()
+    previous_team_context["season"] = previous_team_context["season"] + 1
+    previous_team_context = previous_team_context.rename(columns={
+        "team_points": "team_previous_points",
+        "team_final_position": "team_previous_final_position",
+    })
+    team_context = team_context.merge(
+        previous_team_context,
+        on=["season", "season_club_id"],
+        how="left",
+    )
+    team_context["team_points_change"] = (
+        team_context["team_points"] - team_context["team_previous_points"]
+    )
+    team_context["team_position_change"] = (
+        team_context["team_previous_final_position"]
+        - team_context["team_final_position"]
+    )
+
+    return team_context
+
+
+def build_player_season_clubs(
+    appearances: pd.DataFrame,
+    games: pd.DataFrame,
+    *,
+    competition_id: str = "GB1",
+) -> pd.DataFrame:
+    """Pick each player's main club in each league season by minutes played."""
+    game_lookup = games[["game_id", "season", "competition_id"]]
+    appearances_with_games = appearances.merge(
+        game_lookup,
+        on="game_id",
+        how="left",
+        suffixes=("", "_game"),
+        validate="many_to_one",
+    )
+    league_appearances = appearances_with_games.loc[
+        appearances_with_games["competition_id"].eq(competition_id)
+    ].copy()
+
+    return (
+        league_appearances.groupby(
+            ["season", "player_id", "player_club_id"],
+            as_index=False,
+        )
+        .agg(
+            season_club_minutes=("minutes_played", "sum"),
+            season_club_appearances=("appearance_id", "count"),
+        )
+        .sort_values(
+            [
+                "season",
+                "player_id",
+                "season_club_minutes",
+                "season_club_appearances",
+            ],
+            ascending=[True, True, False, False],
+        )
+        .drop_duplicates(["season", "player_id"], keep="first")
+        .rename(columns={"player_club_id": "season_club_id"})
+    )
+
+
+def add_team_context_features(
+    data: pd.DataFrame,
+    player_season_clubs: pd.DataFrame,
+    team_context: pd.DataFrame,
+) -> pd.DataFrame:
+    """Attach club-season context and player minutes-share features."""
+    columns_to_replace = [
+        "season_club_id",
+        "season_club_minutes",
+        "season_club_appearances",
+        "team_name",
+        "team_matches",
+        "team_wins",
+        "team_draws",
+        "team_losses",
+        *TEAM_CONTEXT_FEATURES,
+    ]
+    result = data.drop(
+        columns=[
+            column for column in columns_to_replace
+            if column in data.columns
+        ]
+    ).merge(
+        player_season_clubs,
+        on=["season", "player_id"],
+        how="left",
+    )
+    result = result.merge(
+        team_context,
+        on=["season", "season_club_id"],
+        how="left",
+    )
+    result["player_minutes_share"] = (
+        result["minutes_played"] / (result["team_matches"] * 90)
+    )
+    result["minutes_in_title_winning_team"] = (
+        result["minutes_played"] * result["team_won_league"]
+    )
+    result["minutes_in_top_4_team"] = (
+        result["minutes_played"] * result["team_top_4"]
+    )
+    return result
