@@ -45,6 +45,10 @@ This creates a labelled historical player-season dataset and an unlabelled
 7. Used five expanding-window validation folds for feature decisions.
 8. Evaluated the frozen Ridge baseline on 2024/25 and analysed errors by
    position, value, minutes, and age.
+9. Compared Random Forest models against Ridge and added previous-season
+   history features.
+10. Scored the 2025/26 Premier League population and produced first valuation
+    gap ranking views.
 
 ## Experiments
 
@@ -59,9 +63,15 @@ This creates a labelled historical player-season dataset and an unlabelled
 | Stabilised per-90 rates | Rejected | Gains were tiny and inconsistent across seasons. |
 | Ridge alpha tuning | Retained | Alpha 100 produced the lowest mean walk-forward MAE, though the gain was marginal. |
 | Frozen Ridge test | Baseline complete | Achieved €10.39m MAE and 0.426 R² on the 2024/25 test season. |
+| Random Forest | Retained | Beat Ridge on every walk-forward fold and improved final test MAE to €9.46m. |
+| History Random Forest | Selected | Previous-season stats and previous market value reduced final test MAE to €5.80m and lifted R² to 0.824. |
+| 2025/26 scoring | First output | Generated candidate undervalued, overvalued, high-confidence, and recruitment-style bargain lists. |
 
-The selected Ridge model averaged approximately **€9.29m MAE** across five
-walk-forward validation seasons. Residual analysis found that it compresses
-valuations toward the middle: cheaper players are often overpredicted, while
-elite players are systematically underpredicted. This motivates one controlled
-comparison with a nonlinear model before producing player rankings.
+The selected model is now a history-aware Random Forest. It averaged
+approximately **€5.94m MAE** across five walk-forward validation seasons and
+achieved **€5.80m MAE** on the held-out 2024/25 test season.
+
+Current ranking outputs should be treated as candidate shortlists rather than
+final truths. The model is strongest for players with previous Premier League
+market values, and weaker for new arrivals or breakout players with limited
+historical context.
