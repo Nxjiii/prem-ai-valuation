@@ -46,6 +46,7 @@ def attach_current_player_values(
             "market_value_in_eur",
             "current_club_name",
             "current_club_domestic_competition_id",
+            "contract_expiration_date",
         ]
     ].rename(columns={
         "market_value_in_eur": "current_market_value_in_eur",
@@ -55,6 +56,7 @@ def attach_current_player_values(
         "current_market_value_in_eur",
         "current_club_name",
         "current_club_domestic_competition_id",
+        "contract_expiration_date",
     ]
 
     return scoring_data.drop(
@@ -174,6 +176,8 @@ def build_scoring_results(
         "previous_market_value_in_eur",
     ]
     optional_columns = [
+        "contract_expiration_date",
+        "current_contract_years_remaining",
         "previous_known_market_value_in_eur",
         "previous_all_minutes",
         "previous_all_goals",

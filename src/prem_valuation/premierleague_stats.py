@@ -11,29 +11,63 @@ import pandas as pd
 
 PL_STATS_COLUMNS = [
     "accurate_cross",
+    "accurate_long_balls",
     "accurate_pass",
+    "accurate_through_ball",
     "aerial_lost",
     "aerial_won",
     "appearances",
+    "att_freekick_goal",
+    "att_hd_goal",
+    "att_lf_goal",
+    "att_pen_goal",
+    "att_pen_miss",
+    "att_rf_goal",
     "big_chance_created",
     "big_chance_missed",
+    "big_chance_scored",
+    "blocked_scoring_att",
+    "challenge_lost",
+    "clean_sheet",
+    "clearance_off_line",
+    "dispossessed",
     "duel_lost",
     "duel_won",
+    "effective_clearance",
     "error_lead_to_goal",
+    "fouls",
     "goal_assist",
+    "goal_kicks",
     "goals",
+    "goals_conceded",
+    "head_clearance",
+    "hit_woodwork",
     "interception",
+    "interception_won",
+    "keeper_throws",
+    "last_man_tackle",
     "mins_played",
     "ontarget_scoring_att",
     "outfielder_block",
+    "own_goals",
+    "penalty_conceded",
+    "penalty_save",
+    "penalty_won",
     "poss_lost_all",
     "red_card",
+    "saves",
     "total_clearance",
+    "total_corners_intobox",
     "total_cross",
+    "total_fastbreak",
+    "total_long_balls",
+    "total_offside",
     "total_pass",
     "total_scoring_att",
     "total_tackle",
+    "total_through_ball",
     "touches",
+    "touches_in_opp_box",
     "won_tackle",
     "yellow_card",
 ]
@@ -150,22 +184,51 @@ def add_premierleague_rate_features(data: pd.DataFrame) -> pd.DataFrame:
         "pl_total_scoring_att",
         "pl_ontarget_scoring_att",
         "pl_big_chance_created",
+        "pl_big_chance_scored",
         "pl_big_chance_missed",
+        "pl_hit_woodwork",
+        "pl_penalty_won",
+        "pl_total_fastbreak",
+        "pl_touches_in_opp_box",
         "pl_total_pass",
         "pl_accurate_pass",
+        "pl_total_long_balls",
+        "pl_accurate_long_balls",
+        "pl_total_through_ball",
+        "pl_accurate_through_ball",
         "pl_total_cross",
         "pl_accurate_cross",
+        "pl_total_corners_intobox",
         "pl_touches",
         "pl_poss_lost_all",
+        "pl_dispossessed",
+        "pl_fouls",
+        "pl_total_offside",
         "pl_total_tackle",
         "pl_won_tackle",
+        "pl_last_man_tackle",
         "pl_interception",
+        "pl_interception_won",
         "pl_total_clearance",
+        "pl_effective_clearance",
+        "pl_head_clearance",
+        "pl_clearance_off_line",
         "pl_outfielder_block",
+        "pl_blocked_scoring_att",
         "pl_duel_won",
         "pl_duel_lost",
+        "pl_challenge_lost",
         "pl_aerial_won",
         "pl_aerial_lost",
+        "pl_penalty_conceded",
+        "pl_own_goals",
+        "pl_error_lead_to_goal",
+        "pl_saves",
+        "pl_penalty_save",
+        "pl_goals_conceded",
+        "pl_clean_sheet",
+        "pl_keeper_throws",
+        "pl_goal_kicks",
     ]
 
     for column in per_90_columns:
@@ -188,5 +251,17 @@ def add_premierleague_rate_features(data: pd.DataFrame) -> pd.DataFrame:
     result["pl_aerial_win_rate"] = (
         result["pl_aerial_won"]
         / (result["pl_aerial_won"] + result["pl_aerial_lost"]).replace(0, pd.NA)
+    )
+    result["pl_long_ball_completion_rate"] = (
+        result["pl_accurate_long_balls"]
+        / result["pl_total_long_balls"].replace(0, pd.NA)
+    )
+    result["pl_through_ball_completion_rate"] = (
+        result["pl_accurate_through_ball"]
+        / result["pl_total_through_ball"].replace(0, pd.NA)
+    )
+    result["pl_save_rate"] = (
+        result["pl_saves"]
+        / (result["pl_saves"] + result["pl_goals_conceded"]).replace(0, pd.NA)
     )
     return result

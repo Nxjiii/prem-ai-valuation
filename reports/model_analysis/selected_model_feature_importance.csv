@@ -1,0 +1,66 @@
+feature,importance
+previous_known_market_value_in_eur,0.30420812918666973
+age_at_season_end,0.273808410413334
+minutes_played,0.0710096051289828
+player_minutes_share,0.07006260490559421
+age_distance_squared,0.05271424436617359
+appearances,0.036480075005797134
+team_goal_difference,0.01774593133543832
+team_goals_for,0.015986645028692962
+team_goals_against,0.013004709462959198
+team_points,0.01057041931199837
+team_points_change,0.009683627595748702
+team_final_position,0.009542306448745692
+team_win_rate,0.009540083156555579
+height_in_cm,0.008773664664265712
+goals,0.008622750647630361
+team_previous_points,0.007325705572209832
+assists,0.006668431883525296
+previous_domestic_league_minutes,0.006065074532333109
+previous_all_minutes,0.006017191153854329
+previous_weighted_minutes,0.005635595575271689
+previous_market_value_in_eur,0.005078465477895021
+previous_minutes_played,0.004893351901709049
+team_previous_final_position,0.004832959264052501
+team_position_change,0.004452727824026994
+yellow_cards,0.004445652127910417
+previous_europe_minutes,0.0038891616789624157
+previous_appearances,0.0037247659128063883
+minutes_in_top_4_team,0.0032510428896323825
+previous_weighted_goals,0.0028546166022599536
+previous_weighted_assists,0.0027376405127823417
+previous_all_goals,0.001613756412809153
+previous_domestic_league_goals,0.001298857104186245
+previous_assists,0.001257073894329945
+previous_goals,0.0012460466402857836
+previous_domestic_league_assists,0.001220873757450587
+previous_all_assists,0.001098399090537201
+position_Defender,0.0009822036049473503
+position_Attack,0.0009464477412629427
+position_Midfield,0.0009431433647849296
+foot_right,0.0007194609757367022
+foot_left,0.0006992689520721244
+sub_position_Centre-Forward,0.0004938566580159208
+sub_position_Centre-Back,0.0004900381647585519
+previous_europe_assists,0.00043035769136218476
+team_relegated,0.00038607258333947476
+sub_position_Central Midfield,0.00038256025327502156
+minutes_in_title_winning_team,0.0003425271019271997
+previous_europe_goals,0.0003251431170651349
+sub_position_Goalkeeper,0.00028662472466482535
+sub_position_Right-Back,0.00028222213796107984
+position_Goalkeeper,0.0002297346076072626
+sub_position_Defensive Midfield,0.0001772126330784969
+sub_position_Left-Back,0.0001175609590909746
+sub_position_Attacking Midfield,0.00011032497024315743
+sub_position_Right Winger,8.801726227010683e-05
+team_top_4,5.3653325363090375e-05
+red_cards,5.212642888765563e-05
+foot_both,4.2567370658410765e-05
+sub_position_Left Winger,3.237906863711572e-05
+team_won_league,1.5380034370975706e-05
+clubs_played_for,1.051980120230271e-05
+sub_position_Right Midfield,0.0
+sub_position_Second Striker,0.0
+foot_Unknown,0.0
+sub_position_Left Midfield,0.0
