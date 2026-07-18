@@ -108,6 +108,60 @@ TEAM_CONTEXT_FEATURES_ALL = (
     TEAM_CONTEXT_NUMERIC_FEATURES + SELECTED_CATEGORICAL_FEATURES
 )
 
+PREMIERLEAGUE_STATS_FEATURES = [
+    "pl_total_scoring_att",
+    "pl_ontarget_scoring_att",
+    "pl_big_chance_created",
+    "pl_big_chance_missed",
+    "pl_total_pass",
+    "pl_accurate_pass",
+    "pl_total_cross",
+    "pl_accurate_cross",
+    "pl_touches",
+    "pl_poss_lost_all",
+    "pl_total_tackle",
+    "pl_won_tackle",
+    "pl_interception",
+    "pl_total_clearance",
+    "pl_outfielder_block",
+    "pl_duel_won",
+    "pl_duel_lost",
+    "pl_aerial_won",
+    "pl_aerial_lost",
+    "pl_error_lead_to_goal",
+    "pl_total_scoring_att_per_90",
+    "pl_ontarget_scoring_att_per_90",
+    "pl_big_chance_created_per_90",
+    "pl_big_chance_missed_per_90",
+    "pl_total_pass_per_90",
+    "pl_accurate_pass_per_90",
+    "pl_total_cross_per_90",
+    "pl_accurate_cross_per_90",
+    "pl_touches_per_90",
+    "pl_poss_lost_all_per_90",
+    "pl_total_tackle_per_90",
+    "pl_won_tackle_per_90",
+    "pl_interception_per_90",
+    "pl_total_clearance_per_90",
+    "pl_outfielder_block_per_90",
+    "pl_duel_won_per_90",
+    "pl_duel_lost_per_90",
+    "pl_aerial_won_per_90",
+    "pl_aerial_lost_per_90",
+    "pl_pass_completion_rate",
+    "pl_cross_completion_rate",
+    "pl_tackle_success_rate",
+    "pl_duel_win_rate",
+    "pl_aerial_win_rate",
+]
+
+PREMIERLEAGUE_STATS_NUMERIC_FEATURES = (
+    TEAM_CONTEXT_NUMERIC_FEATURES + PREMIERLEAGUE_STATS_FEATURES
+)
+PREMIERLEAGUE_STATS_FEATURES_ALL = (
+    PREMIERLEAGUE_STATS_NUMERIC_FEATURES + SELECTED_CATEGORICAL_FEATURES
+)
+
 
 COMPETITION_WEIGHTS = {
     "GB1": 1.00,
