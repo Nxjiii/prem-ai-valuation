@@ -72,6 +72,11 @@ LLM or SHAP yet; it creates rule-based reason codes from model inputs,
 position-relative percentiles, and any valuation guardrails that affected the
 final estimate.
 
+Explanation percentiles use detailed role groups where possible, such as
+Centre-Back, Left-Back, Right-Back, Defensive Midfield, Attacking Midfield,
+Left Winger, Right Winger, and Centre-Forward. This keeps broad model training
+stable while making the reporting layer fairer and more dashboard-friendly.
+
 Explain one player:
 
 ```bash
@@ -104,6 +109,7 @@ Reusable project logic lives in `src/prem_valuation/`:
 - `rankings.py`: scoring, season-club metadata, ranking, and CSV output helpers
 - `premierleague_stats.py`: Premier League stat cleaning, joining, and rate
   features
+- `roles.py`: detailed role-group mapping for reporting and explanations
 
 Key scripts live in `scripts/`:
 

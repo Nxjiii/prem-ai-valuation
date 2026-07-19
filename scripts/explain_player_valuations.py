@@ -24,6 +24,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(PROJECT_ROOT / "src"))
 
 from prem_valuation.data import PROCESSED_DIR  # noqa: E402
+from prem_valuation.roles import ROLE_GROUP_ORDER, add_role_group  # noqa: E402
 
 
 REPORTS_DIR = PROJECT_ROOT / "reports" / "explanations"
@@ -126,9 +127,14 @@ def slugify(value: str) -> str:
     return "_".join(part for part in cleaned.split("_") if part)
 
 
-def add_position_percentiles(scoring: pd.DataFrame) -> pd.DataFrame:
-    """Add percentile columns for signal features within each broad position."""
-    result = scoring.copy()
+def add_comparison_percentiles(scoring: pd.DataFrame) -> pd.DataFrame:
+    """Add percentile columns within detailed role groups where possible."""
+    result = add_role_group(scoring)
+    role_counts = result["role_group"].value_counts()
+    result["comparison_group"] = result["role_group"].where(
+        result["role_group"].map(role_counts).ge(10),
+        result["position"],
+    )
     seen_features = {
         feature
         for feature_group in SIGNAL_FEATURES_BY_POSITION.values()
@@ -144,9 +150,9 @@ def add_position_percentiles(scoring: pd.DataFrame) -> pd.DataFrame:
     for feature in sorted(seen_features):
         if feature not in result.columns:
             continue
-        percentile_column = f"{feature}_position_percentile"
+        percentile_column = f"{feature}_comparison_percentile"
         result[percentile_column] = (
-            result.groupby("position", observed=False)[feature]
+            result.groupby("comparison_group", observed=False)[feature]
             .rank(pct=True, na_option="keep")
         )
     return result
@@ -285,36 +291,38 @@ def player_signals(row: pd.Series) -> tuple[list[str], list[str]]:
     ):
         if feature not in row.index:
             continue
-        percentile = row.get(f"{feature}_position_percentile")
+        percentile = row.get(f"{feature}_comparison_percentile")
         value = row.get(feature)
         if pd.isna(percentile) or pd.isna(value):
             continue
+        comparison_group = row.get("comparison_group", row.get("role_group", "role"))
+        comparison_label = f"for {comparison_group}s"
 
         if good_direction == "high":
             if percentile >= 0.85:
                 add_signal(
                     positives,
                     percentile,
-                    f"strong {label} for his position ({as_percentile(percentile)})",
+                    f"strong {label} {comparison_label} ({as_percentile(percentile)})",
                 )
             elif percentile <= 0.15:
                 add_signal(
                     negatives,
                     1 - percentile,
-                    f"low {label} for his position ({as_percentile(percentile)})",
+                    f"low {label} {comparison_label} ({as_percentile(percentile)})",
                 )
         else:
             if percentile <= 0.15:
                 add_signal(
                     positives,
                     1 - percentile,
-                    f"low {label} for his position ({as_percentile(percentile)})",
+                    f"low {label} {comparison_label} ({as_percentile(percentile)})",
                 )
             elif percentile >= 0.85:
                 add_signal(
                     negatives,
                     percentile,
-                    f"high {label} for his position ({as_percentile(percentile)})",
+                    f"high {label} {comparison_label} ({as_percentile(percentile)})",
                 )
 
     if (
@@ -402,7 +410,7 @@ def interpretation(row: pd.Series, guardrails: list[str]) -> str:
 
 def build_explanations(scoring: pd.DataFrame) -> pd.DataFrame:
     """Create one explanation row per player."""
-    scoring = add_position_percentiles(scoring)
+    scoring = add_comparison_percentiles(scoring)
     explanation_rows = []
 
     for _, row in scoring.iterrows():
@@ -415,6 +423,8 @@ def build_explanations(scoring: pd.DataFrame) -> pd.DataFrame:
             "current_club_name": row.get("current_club_name"),
             "position": row.get("position"),
             "sub_position": row.get("sub_position"),
+            "role_group": row.get("role_group"),
+            "comparison_group": row.get("comparison_group"),
             "age_at_season_end": row.get("age_at_season_end"),
             "minutes_played": row.get("minutes_played"),
             "current_market_value_in_eur": row.get("current_market_value_in_eur"),
@@ -451,6 +461,7 @@ def player_card(row: pd.Series) -> str:
         "",
         f"- Club: {row.get('season_club_name')} / current: {row.get('current_club_name')}",
         f"- Position: {row.get('position')} — {row.get('sub_position')}",
+        f"- Role comparison group: {row.get('comparison_group', row.get('role_group'))}",
         f"- Age: {row.get('age_at_season_end'):.1f}",
         f"- Minutes: {row.get('minutes_played'):.0f}",
         f"- Current Transfermarkt value: {euros(row.get('current_market_value_in_eur'))}",
@@ -614,20 +625,14 @@ def match_team(explanations: pd.DataFrame, query: str) -> tuple[str, pd.DataFram
 
 def sort_team_cards(cards: pd.DataFrame) -> pd.DataFrame:
     """Sort team cards in a useful reading order."""
-    position_order = {
-        "Goalkeeper": 0,
-        "Defender": 1,
-        "Midfield": 2,
-        "Attack": 3,
-    }
     result = cards.copy()
-    result["_position_order"] = result["position"].map(position_order).fillna(9)
+    result["_role_group_order"] = result["role_group"].map(ROLE_GROUP_ORDER).fillna(99)
     return (
         result.sort_values(
-            ["_position_order", "minutes_played", "absolute_gap"],
+            ["_role_group_order", "minutes_played", "absolute_gap"],
             ascending=[True, False, False],
         )
-        .drop(columns="_position_order")
+        .drop(columns="_role_group_order")
     )
 
 
@@ -801,6 +806,7 @@ def main() -> None:
                 "player_name",
                 "season_club_name",
                 "current_club_name",
+                "role_group",
                 "current_market_value_in_eur",
                 "predicted_value",
                 "valuation_gap",

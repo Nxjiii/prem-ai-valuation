@@ -5,6 +5,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from prem_valuation.roles import add_role_group
+
 
 RANKING_COLUMNS = [
     "player_name",
@@ -12,6 +14,7 @@ RANKING_COLUMNS = [
     "current_club_name",
     "position",
     "sub_position",
+    "role_group",
     "age_at_season_end",
     "minutes_played",
     "current_market_value_in_eur",
@@ -26,6 +29,7 @@ HIGH_CONFIDENCE_COLUMNS = [
     "current_club_name",
     "position",
     "sub_position",
+    "role_group",
     "age_at_season_end",
     "minutes_played",
     "previous_market_value_in_eur",
@@ -159,6 +163,7 @@ def build_scoring_results(
     predictions: np.ndarray,
 ) -> pd.DataFrame:
     """Create the scored player table used for valuation-gap rankings."""
+    scoring_data = add_role_group(scoring_data)
     base_columns = [
         "season",
         "player_id",
@@ -169,6 +174,7 @@ def build_scoring_results(
         "current_club_domestic_competition_id",
         "position",
         "sub_position",
+        "role_group",
         "age_at_season_end",
         "minutes_played",
         "previous_minutes_played",
